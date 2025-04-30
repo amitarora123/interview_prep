@@ -28,9 +28,9 @@ const InterviewCard = (params: InterviewCardProps) => {
 
     const randomImg = getRandomInterviewCover();
     setCoverImage(randomImg);
+    if (userId)
     ( async () => {
       const feedback = await getFeedbackByInterviewId({interviewId, userId} as GetFeedbackByInterviewIdParams );
-      console.log(feedback)
       setFeedback(feedback);
     }
     )()

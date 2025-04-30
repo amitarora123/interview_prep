@@ -138,7 +138,7 @@ const AuthForm = (params: AuthFormParams) => {
         const response = await signIn({
           idToken,
           email,
-        });
+        } as SignInParams);
         if (response.success) {
           toast.success(response.message);
           router.replace("/");
