@@ -5,8 +5,17 @@ import { auth, db } from "@/firebase/admin";
 import { cookies } from "next/headers";
 import { signOut } from "firebase/auth";
 import { auth as clientAuth } from "@/firebase/client";
+import { sendVerificationEmail } from "@/helpers/sendVerificationEmail";
 const ONE_WEEK = 60 * 60 * 24 * 7;
 
+const generateOtp = (): string => {
+  const verifyCode = Math.floor(100000 + Math.random() * 900000).toString();
+  return verifyCode;
+};
+
+const generateVerifyCodeExpiry = (): Date => {
+  return new Date(Date.now() + 3600000);
+};
 export async function signUp(params: SignUpParams) {
   const { uid, name, email } = params;
   try {
@@ -19,14 +28,20 @@ export async function signUp(params: SignUpParams) {
       };
     }
 
+    const verifyCode = generateOtp();
+
+    const verifyCodeExpiry = generateVerifyCodeExpiry();
     await db.collection("users").doc(uid).set({
       name,
       email,
+      verifyCode,
+      verifyCodeExpiry,
+      isVerified: false,
     });
-
+    await sendVerificationEmail(email, name, verifyCode);
     return {
       success: true,
-      message: "User registered successfully",
+      message: "User registered successfully, please verify to continue",
     };
   } catch (error: any) {
     console.error("Error creating a user ", error);
@@ -43,6 +58,37 @@ export async function signUp(params: SignUpParams) {
     };
   }
 }
+
+export async function verifyUser(params: VerifyUserParams) {
+  const { verifyCode, uid } = params;
+
+  const userRecordRef = db.collection("users").doc(uid);
+  const userRecord = await userRecordRef.get();
+  const userData = userRecord.data();
+
+  if (!userData) {
+    return {
+      success: false,
+      message: "user does not exist please register instead",
+    };
+  }
+
+  if (userData.verifyCode === verifyCode) {
+    await userRecordRef.update({
+      isVerified: true,
+    });
+    return {
+      success: true,
+      message: "User verified successfully",
+    };
+  } else {
+    return {
+      success: false,
+      message: "Invalid verification code.",
+    };
+  }
+}
+
 export async function setSessionCookie(idToken: string) {
   const cookieStore = await cookies();
 
@@ -71,6 +117,24 @@ export async function signIn(params: SignInParams) {
         message: "User does not exist. Create an account instead.",
       };
     }
+    const userData = (
+      await db.collection("users").doc(userRecord.uid).get()
+    ).data();
+
+    if (!userData) {
+      return {
+        success: false,
+        message: "User does not exist. Create an account instead.",
+      };
+    }
+
+    if (!userData.isVerified) {
+      return {
+        success: false,
+        message: "Please Verify the Account to continue",
+      };
+    }
+
     await setSessionCookie(idToken);
 
     return {
@@ -88,17 +152,14 @@ export async function signIn(params: SignInParams) {
 export async function getCurrentUser(): Promise<User | null> {
   const cookieStore = await cookies();
   const sessionCookie = cookieStore.get("session")?.value;
-
   if (!sessionCookie) return null;
 
   try {
     const decodedClaims = await auth.verifySessionCookie(sessionCookie, true);
-
     const userRecord = await db
       .collection("users")
       .doc(decodedClaims.uid)
       .get();
-
     if (!userRecord.exists) return null;
 
     return {
@@ -131,19 +192,25 @@ export async function logout() {
     };
   }
 }
-export async function googleLogin({params, idToken}: {params:  SignUpParams, idToken: string}) {
+export async function googleLogin({
+  params,
+  idToken,
+}: {
+  params: SignUpParams;
+  idToken: string;
+}) {
   const { name, email, uid } = params;
 
   const existedUser = await db.collection("users").doc(uid).get();
-
-  if (!existedUser) {
+  if (!existedUser.exists) {
     await db.collection("users").doc(uid).set({
       name,
       email,
+      isVerified: true,
     });
   }
-  const response = signIn({email, idToken});
+
+  const response = signIn({ email, idToken });
 
   return response;
-
 }

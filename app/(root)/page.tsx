@@ -1,13 +1,21 @@
-"use client";
-
 import Hero from "@/components/Hero";
 import InterviewCard from "@/components/InterviewCard";
-import { dummyInterviews } from "@/constants";
-import { useState } from "react";
-const Home = () => {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [takenInterviews, setTakenInterviews] =
-    useState<Interview[]>(dummyInterviews);
+import { getCurrentUser } from "@/lib/action/auth.action";
+import {
+  getInterviewsByUserId,
+  getLatestInterviews,
+} from "@/lib/action/general.action";
+
+const Home = async () => {
+  const user = await getCurrentUser();
+
+  const [userInterviews, allInterview] = await Promise.all([
+    getInterviewsByUserId(user?.id!),
+    getLatestInterviews({ userId: user?.id! }),
+  ]);
+
+  const hasPastInterviews = userInterviews?.length! > 0;
+  const hasUpcomingInterviews = allInterview?.length! > 0;
 
   return (
     <div>
@@ -16,27 +24,39 @@ const Home = () => {
       <div className="my-10">
         <h3>Your Past Interviews</h3>
 
-        {takenInterviews.length > 0 ? (
+        {hasPastInterviews ? (
           <div className="grid lg:grid-cols-3  sm:grid-cols-2 gap-10 my-10">
-            {takenInterviews.map((interview) => (
-              <InterviewCard key={interview.id.toString()} {...interview} interviewId={interview.id} />
+            {userInterviews?.map((interview) => (
+              <InterviewCard
+              key={interview.id}
+              userId={user?.id}
+              interviewId={interview.id}
+              role={interview.role}
+              type={interview.type}
+              techstack={interview.techstack}
+              createdAt={interview.createdAt}
+              />
             ))}
           </div>
         ) : (
-          <p>No Interviews Yet</p>
+          <p>You haven&apos;t taken any interviews yet</p>
         )}
       </div>
 
-      <div>
+      <div >
         <h3>Pick Your Interview</h3>
-        {takenInterviews.length > 0 ? (
+        {hasUpcomingInterviews ? (
           <div className="grid lg:grid-cols-3  sm:grid-cols-2 gap-10 my-10">
-            {takenInterviews.map((interview) => (
-              <InterviewCard key={interview.id.toString()} {...interview} interviewId={interview.id} />
+            {allInterview?.map((interview) => (
+              <InterviewCard
+                key={interview.id.toString()}
+                {...interview}
+                interviewId={interview.id}
+              />
             ))}
           </div>
         ) : (
-          <p>No Interviews Yet</p>
+          <p className="py-2">No Interviews Yet</p>
         )}
       </div>
     </div>

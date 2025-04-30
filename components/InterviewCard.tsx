@@ -12,21 +12,29 @@ import DisplayTechIcons from "./DisplayTechIcons";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import dayjs from "dayjs";
+import { getFeedbackByInterviewId } from "@/lib/action/general.action";
 
 const InterviewCard = (params: InterviewCardProps) => {
-  const { interviewId, role, type, techstack, createdAt } = params;
+  const { interviewId, role, type, techstack, createdAt, userId } = params;
 
-  const feedback = null as Feedback | null;
-  const [coverImage, setCoverImage] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<Feedback|null>(null);
+    const [coverImage, setCoverImage] = useState<string | null>(null);
   const formattedDate = dayjs(
     feedback?.createdAt || createdAt || Date.now()
   ).format("MMM D, YYYY");
   const normalizedType = /mix/gi.test(type) ? "Mixed" : type;
   useEffect(() => {
     // Randomize separately for each card
+
     const randomImg = getRandomInterviewCover();
     setCoverImage(randomImg);
-  }, [interviewId]);
+    ( async () => {
+      const feedback = await getFeedbackByInterviewId({interviewId, userId} as GetFeedbackByInterviewIdParams );
+      console.log(feedback)
+      setFeedback(feedback);
+    }
+    )()
+  }, [interviewId, userId]);
 
   if (!coverImage) return null;
   return (
@@ -76,7 +84,7 @@ const InterviewCard = (params: InterviewCardProps) => {
                 height={25}
                 className=""
               />
-              <p>{feedback?.finalAssessment? feedback?.finalAssessment: "--"} /100</p>
+              <p>{feedback?.totalScore ? feedback?.totalScore: "--"} /100</p>
             </div>
           </div>
           <p className="text-base leading-6 text-[#D6E0FF]">
@@ -96,7 +104,7 @@ const InterviewCard = (params: InterviewCardProps) => {
               } `}
               className="bg-violet-300 px-3 py-2 text-black rounded-full text-xs font-semibold text-nowrap  "
             >
-              View Interview
+              {feedback ? "View Feedback" :  "View Interview"  }
             </Link>
           </div>
         </CardFooter>

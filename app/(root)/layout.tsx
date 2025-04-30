@@ -6,7 +6,7 @@ const RootLayout = ({
     children: React.ReactNode;
   }>) => {
   return (
-    <main className="pattern h-screen container px-10 mx-auto lg:max-w-6xl">
+    <main className="root-layout">
         <Navbar />
         {children}
     </main>

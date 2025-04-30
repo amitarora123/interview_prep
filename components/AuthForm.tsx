@@ -1,7 +1,12 @@
 "use client";
 import { FcGoogle } from "react-icons/fc";
 import { auth, provider } from "@/firebase/client";
-import { googleLogin, signIn, signUp } from "@/lib/action/auth.action";
+import {
+  googleLogin,
+  signIn,
+  signUp,
+  verifyUser,
+} from "@/lib/action/auth.action";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
   createUserWithEmailAndPassword,
@@ -18,7 +23,12 @@ import FormField from "./FormField";
 import Image from "next/image";
 import Link from "next/link";
 
-const AuthForm = ({ type }: { type: FormType }) => {
+interface AuthFormParams {
+  type: FormType;
+  uid?: string;
+}
+const AuthForm = (params: AuthFormParams) => {
+  const { type, uid } = params;
   const formSchema = z.object({
     name:
       type === "sign-up"
@@ -26,12 +36,24 @@ const AuthForm = ({ type }: { type: FormType }) => {
             message: "name must be at least 2 characters.",
           })
         : z.string().optional(),
-    email: z.string().email({
-      message: "Invalid email address",
-    }),
-    password: z.string().min(6, {
-      message: "password must be at least 2 characters",
-    }),
+    email:
+      type === "verify"
+        ? z.string().optional()
+        : z.string().email({
+            message: "Invalid email address",
+          }),
+    password:
+      type === "verify"
+        ? z.string().optional()
+        : z.string().min(6, {
+            message: "password must be at least 2 characters",
+          }),
+    verifyCode:
+      type === "verify"
+        ? z.string().length(6, {
+            message: "VerifyCode is of 6 digits",
+          })
+        : z.string().optional(),
   });
 
   const router = useRouter();
@@ -42,6 +64,7 @@ const AuthForm = ({ type }: { type: FormType }) => {
       name: "",
       email: "",
       password: "",
+      verifyCode: "",
     },
   });
 
@@ -65,6 +88,7 @@ const AuthForm = ({ type }: { type: FormType }) => {
       } else {
         toast.error(response.message);
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.log(error);
       toast.error(error.message);
@@ -85,6 +109,17 @@ const AuthForm = ({ type }: { type: FormType }) => {
           password: password,
           name: name!,
         });
+        if (response.success) {
+          toast.success(response.message);
+          router.replace(`/verify/${createdUser.user.uid}`);
+        } else {
+          toast.error(response.message);
+        }
+      } else if (type === "verify") {
+        const response = await verifyUser({
+          uid,
+          verifyCode: values.verifyCode!,
+        } as VerifyUserParams);
         if (response.success) {
           toast.success(response.message);
           router.replace("/sign-in");
@@ -109,6 +144,9 @@ const AuthForm = ({ type }: { type: FormType }) => {
           router.replace("/");
         } else {
           toast.error(response.message);
+          if (response.message === "Please Verify the Account to continue") {
+            router.replace(`/verify/${loggedInUser.user.uid}`);
+          }
         }
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -119,7 +157,7 @@ const AuthForm = ({ type }: { type: FormType }) => {
   };
 
   return (
-    <div className="lg:min-w-[566px]  border-gradient mx-auto card-border rounded-[20px] gap-[36px] bg-gradient-to-b from-[#1A1C20] to-[#08090D] border-2 shadow-[0px_0px_70px_0px_rgba(0,0,0,0.2)]">
+    <div className="lg:min-w-[566px]  border-gradient mx-auto card-border rounded-[20px] gap-[36px] bg-gradient-to-b from-[#1A1C20] to-[#08090D] border-2  shadow-[0px_0px_70px_0px_rgba(0,0,0,0.2)]">
       <div className="flex justify-center items-center flex-col px-16 py-6">
         <div className="flex justify-center gap-2 items-center mb-5">
           <Image src="/logo.svg" width={30} height={30} alt="logo" />
@@ -132,26 +170,38 @@ const AuthForm = ({ type }: { type: FormType }) => {
         <div className=" my-5 w-full">
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-              {type === "sign-up" ? (
+              {type === "verify" ? (
                 <FormField
-                  label="Name"
+                  label="Verify Code"
                   control={form.control}
                   type="text"
-                  name="name"
+                  name="verifyCode"
                 />
-              ) : null}
-              <FormField
-                label="Email"
-                control={form.control}
-                type="email"
-                name="email"
-              />
-              <FormField
-                label="Password"
-                control={form.control}
-                type="password"
-                name="password"
-              />
+              ) : (
+                <>
+                  {type === "sign-up" ? (
+                    <FormField
+                      label="Name"
+                      control={form.control}
+                      type="text"
+                      name="name"
+                    />
+                  ) : null}
+                  <FormField
+                    label="Email"
+                    control={form.control}
+                    type="email"
+                    name="email"
+                  />
+                  <FormField
+                    label="Password"
+                    control={form.control}
+                    type="password"
+                    name="password"
+                  />
+                </>
+              )}
+
               <Button
                 type="submit"
                 className="w-full text-center rounded-full bg-violet-200"
@@ -160,30 +210,35 @@ const AuthForm = ({ type }: { type: FormType }) => {
               </Button>
             </form>
           </Form>
-          <Button
-            onClick={() => handleGoogleLogin()}
-            className="w-full text-center my-3 rounded-full"
-            variant="outline"
-          >
-            <FcGoogle size={24} /> Continue with Google
-          </Button>
+          {type !== "verify" && (
+            <Button
+              onClick={() => handleGoogleLogin()}
+              className="w-full text-center my-3 rounded-full"
+              variant="outline"
+            >
+              <FcGoogle size={24} /> Continue with Google
+            </Button>
+          )}
         </div>
-
-        {type === "sign-in" ? (
-          <p>
-            don&apos;t have an account?
-            <Link href="/sign-up" className="font-bold text-lg ml-1">
-              {" "}
-              Sign up
-            </Link>
-          </p>
-        ) : (
-          <p>
-            don&apos;t have an account?
-            <Link href="/sign-in" className="font-bold text-lg ml-1">
-              Sign in
-            </Link>
-          </p>
+        {type !== "verify" && (
+          <>
+            {type === "sign-in" ? (
+              <p>
+                Don&apos;t have an account?
+                <Link href="/sign-up" className="font-bold text-lg ml-1">
+                  {" "}
+                  Sign up
+                </Link>
+              </p>
+            ) : (
+              <p>
+                Don&apos;t have an account?
+                <Link href="/sign-in" className="font-bold text-lg ml-1">
+                  Sign in
+                </Link>
+              </p>
+            )}
+          </>
         )}
       </div>
     </div>

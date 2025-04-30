@@ -1,6 +1,7 @@
 import Image from "next/image";
 import React from "react";
 import { Button } from "./ui/button";
+import Link from "next/link";
 
 const Hero = () => {
   return (
@@ -13,7 +14,7 @@ const Hero = () => {
           Practice real interview questions & get instant feedback.
         </p>
         <Button className="rounded-full bg-violet-200 hover:bg-violet-100 transition-colors cursor-pointer duration-150 ease-in  px-8 w-fit text-black">
-          Start an Interview
+          <Link href="/interview">Start an Interview</Link>
         </Button>
       </div>
       <div className="flex justify-center items-center">

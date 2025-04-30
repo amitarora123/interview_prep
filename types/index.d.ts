@@ -60,7 +60,10 @@ interface RouteParams {
   params: Promise<Record<string, string>>;
   searchParams: Promise<Record<string, string>>;
 }
-
+interface VerifyUserParams {
+  verifyCode: string;
+  uid: string;
+}
 interface GetFeedbackByInterviewIdParams {
   interviewId: string;
   userId: string;
@@ -83,7 +86,7 @@ interface SignUpParams {
   password: string;
 }
 
-type FormType = "sign-in" | "sign-up";
+type FormType = "sign-in" | "sign-up" | "verify";
 
 interface InterviewFormProps {
   interviewId: string;
