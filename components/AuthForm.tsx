@@ -71,7 +71,7 @@ const AuthForm = (params: AuthFormParams) => {
   const handleGoogleLogin = async () => {
     try {
       const result = await signInWithPopup(auth, provider);
-
+      console.log(result)
       const idToken = await result.user.getIdToken();
       const response = await googleLogin({
         idToken,
@@ -86,6 +86,7 @@ const AuthForm = (params: AuthFormParams) => {
         toast.success(response.message);
         router.replace("/");
       } else {
+        console.log(response)
         toast.error(response.message);
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
