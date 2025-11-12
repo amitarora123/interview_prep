@@ -5,10 +5,12 @@ import Link from "next/link";
 
 const Hero = () => {
   return (
-    <div className="hero-card bg-gradient-to-b from-[#171532] to-[#08090D] py-10 px-5 rounded-xl grid md:grid-cols-2">
-      <div className="flex flex-col gap-4">
-        <h1 className="text-2xl lg:text-4xl font-semibold">
-          Get Interview-Ready with AI-Powered Practice & Feedback
+    <div className="hero-card bg-gradient-to-b from-[#171532] to-[#08090D] px-15 py-10 rounded-xl grid md:grid-cols-2">
+      <div className="flex flex-col gap-6">
+        <h1 className="text-2xl lg:text-3xl font-mono  font-semibold">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-pink-200 to-violet-200">
+            Get Interview-Ready with AI-Powered Practice & Feedback
+          </span>
         </h1>
         <p className="text-violet-100">
           Practice real interview questions & get instant feedback.

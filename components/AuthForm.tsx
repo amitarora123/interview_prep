@@ -71,7 +71,6 @@ const AuthForm = (params: AuthFormParams) => {
   const handleGoogleLogin = async () => {
     try {
       const result = await signInWithPopup(auth, provider);
-      console.log(result)
       const idToken = await result.user.getIdToken();
       const response = await googleLogin({
         idToken,
@@ -86,7 +85,7 @@ const AuthForm = (params: AuthFormParams) => {
         toast.success(response.message);
         router.replace("/");
       } else {
-        console.log(response)
+        console.log(response);
         toast.error(response.message);
       }
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -101,13 +100,13 @@ const AuthForm = (params: AuthFormParams) => {
       if (type === "sign-up") {
         const createdUser = await createUserWithEmailAndPassword(
           auth,
-          email,
-          password
+          email!,
+          password!
         );
         const response = await signUp({
           uid: createdUser.user.uid,
-          email: email,
-          password: password,
+          email: email!,
+          password: password!,
           name: name!,
         });
         if (response.success) {
@@ -130,8 +129,8 @@ const AuthForm = (params: AuthFormParams) => {
       } else {
         const loggedInUser = await signInWithEmailAndPassword(
           auth,
-          email,
-          password
+          email!,
+          password!
         );
 
         const idToken = await loggedInUser.user.getIdToken(true);

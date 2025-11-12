@@ -13,7 +13,7 @@ const DisplayTechIcons = ({ techStack }: TechIconProps) => {
       const result = await getTechLogos(techStack);
       setTechLogos(result);
     })();
-  });
+  }, []);
   return (
     <div className="flex">
       {techLogos.slice(0, 3).map(({ tech, url }, index) => (

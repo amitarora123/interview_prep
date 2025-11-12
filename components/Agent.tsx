@@ -20,7 +20,7 @@ enum CallStatus {
 }
 
 const Agent = ({
-  userName,
+  username,
   userId,
   interviewId,
   feedbackId,
@@ -34,7 +34,6 @@ const Agent = ({
   const [messages, setMessages] = useState<SavedMessages[]>([]);
   const [callStatus, setCallStatus] = useState<CallStatus>(CallStatus.INACTIVE);
 
-
   useEffect(() => {
     const onCallStart = () => {
       setCallStatus(CallStatus.ACTIVE);
@@ -43,7 +42,6 @@ const Agent = ({
       setCallStatus(CallStatus.FINISHED);
     };
     const onMessage = (message: Message) => {
-      console.log(message)
       if (message.type === "transcript" && message.transcriptType === "final") {
         const newMessage = { role: message.role, content: message.transcript };
         setMessages((prev) => [...prev, newMessage]);
@@ -61,12 +59,12 @@ const Agent = ({
       console.log("Error: ", error);
     };
     return () => {
-      vapi.off("call-start", onCallStart);
-      vapi.off("call-end", onCallEnd);
-      vapi.off("message", onMessage);
-      vapi.off("speech-start", onSpeechStart);
-      vapi.off("speech-end", onSpeechEnd);
-      vapi.off("error", onError);
+      vapi.on("call-start", onCallStart);
+      vapi.on("call-end", onCallEnd);
+      vapi.on("message", onMessage);
+      vapi.on("speech-start", onSpeechStart);
+      vapi.on("speech-end", onSpeechEnd);
+      vapi.on("error", onError);
     };
   }, []);
 
@@ -76,8 +74,6 @@ const Agent = ({
     }
 
     const handleGenerateFeedback = async (messages: SavedMessages[]) => {
-      console.log("handleGenerateFeedback");
-
       const { success, feedbackId: id } = await createFeedback({
         interviewId: interviewId!,
         userId: userId!,
@@ -92,7 +88,7 @@ const Agent = ({
         router.push("/");
       }
     };
-    
+
     if (callStatus === CallStatus.FINISHED) {
       if (type === "generate") {
         router.push("/");
@@ -103,29 +99,40 @@ const Agent = ({
   }, [messages, callStatus, feedbackId, interviewId, router, type, userId]);
 
   const handleCall = async () => {
-    setCallStatus(CallStatus.CONNECTING);
+    try {
+      setCallStatus(CallStatus.CONNECTING);
 
-    if (type === "generate") {
-      await vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!, {
-        variableValues: {
-          username: userName,
-          userid: userId,
-        },
-      });
-    } else {
-      let formattedQuestions = "";
-      if (questions) {
-        formattedQuestions = questions
-          .map((question) => `- ${question}`)
-          .join("\n");
+      if (type === "generate") {
+        await vapi.start(
+          undefined,
+          undefined,
+          undefined,
+          process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!,
+          {
+            variableValues: {
+              username,
+              userid: userId,
+            },
+          }
+        );
+      } else {
+        let formattedQuestions = "";
+        if (questions) {
+          formattedQuestions = questions
+            .map((question) => `- ${question}`)
+            .join("\n");
+        }
+        await vapi.start(interviewer, {
+          variableValues: {
+            questions: formattedQuestions,
+          },
+        });
       }
-      await vapi.start(interviewer, {
-        variableValues: {
-          questions: formattedQuestions,
-        },
-      });
+      setCallStatus(CallStatus.ACTIVE);
+    } catch (error) {
+      console.log("An Error occurred during interview", error);
+      router.replace("/");
     }
-    setCallStatus(CallStatus.ACTIVE);
   };
 
   const handleDisconnect = () => {
@@ -160,7 +167,7 @@ const Agent = ({
               height={539}
               className="rounded-full object-cover size-[120px]"
             />
-            <h3>{userName}</h3>
+            <h3>{username}</h3>
           </div>
         </div>
       </div>
@@ -172,7 +179,7 @@ const Agent = ({
               key={lastMessage}
               className={cn(
                 "transition-opacity duration-500 opacity-0",
-                "animate-fadeIn opacity-100"
+                "animate-fadeIn opacity-100 text-white"
               )}
             >
               {lastMessage}

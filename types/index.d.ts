@@ -1,3 +1,5 @@
+declare module "*.css";
+
 interface Feedback {
   id: string;
   interviewId: string;
@@ -48,7 +50,7 @@ interface InterviewCardProps {
 }
 
 interface AgentProps {
-  userName: string;
+  username: string;
   userId?: string;
   interviewId?: string;
   feedbackId?: string;

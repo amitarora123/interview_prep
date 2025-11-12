@@ -17,8 +17,8 @@ import { getFeedbackByInterviewId } from "@/lib/action/general.action";
 const InterviewCard = (params: InterviewCardProps) => {
   const { interviewId, role, type, techstack, createdAt, userId } = params;
 
-  const [feedback, setFeedback] = useState<Feedback|null>(null);
-    const [coverImage, setCoverImage] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState<Feedback | null>(null);
+  const [coverImage, setCoverImage] = useState<string | null>(null);
   const formattedDate = dayjs(
     feedback?.createdAt || createdAt || Date.now()
   ).format("MMM D, YYYY");
@@ -28,12 +28,14 @@ const InterviewCard = (params: InterviewCardProps) => {
 
     const randomImg = getRandomInterviewCover();
     setCoverImage(randomImg);
-    if (userId){
-      ( async () => {
-        const feedback = await getFeedbackByInterviewId({interviewId, userId} as GetFeedbackByInterviewIdParams );
+    if (userId) {
+      (async () => {
+        const feedback = await getFeedbackByInterviewId({
+          interviewId,
+          userId,
+        } as GetFeedbackByInterviewIdParams);
         setFeedback(feedback);
-      }
-      )()
+      })();
     }
   }, [interviewId, userId]);
 
@@ -85,7 +87,7 @@ const InterviewCard = (params: InterviewCardProps) => {
                 height={25}
                 className=""
               />
-              <p>{feedback?.totalScore ? feedback?.totalScore: "--"} /100</p>
+              <p>{feedback?.totalScore ? feedback?.totalScore : "--"} /100</p>
             </div>
           </div>
           <p className="text-base leading-6 text-[#D6E0FF]">
@@ -105,7 +107,7 @@ const InterviewCard = (params: InterviewCardProps) => {
               } `}
               className="bg-violet-300 px-3 py-2 text-black rounded-full text-xs font-semibold text-nowrap  "
             >
-              {feedback ? "View Feedback" :  "View Interview"  }
+              {feedback ? "View Feedback" : "Give Interview"}
             </Link>
           </div>
         </CardFooter>

@@ -106,7 +106,7 @@ export async function getLatestInterviews(
   return interviews.docs.map((doc) => ({
     ...doc.data(),
     id: doc.id,
-    userId:"",
+    userId: "",
   })) as Interview[];
 }
 

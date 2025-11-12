@@ -23,7 +23,7 @@ const Navbar = () => {
     }
   };
   return (
-    <header className="w-full h-40 container mx-auto">
+    <header className="w-full h-20 container mx-auto">
       <nav className="flex h-full items-center justify-between">
         <p className="flex gap-1 text-2xl font-semibold ">
           <Image src="/logo.svg" height={24} width={26} alt="logo" />

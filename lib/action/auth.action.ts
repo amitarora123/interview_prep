@@ -16,6 +16,7 @@ const generateOtp = (): string => {
 const generateVerifyCodeExpiry = (): Date => {
   return new Date(Date.now() + 3600000);
 };
+
 export async function signUp(params: SignUpParams) {
   const { uid, name, email } = params;
   try {
@@ -129,6 +130,12 @@ export async function signIn(params: SignInParams) {
     }
 
     if (!userData.isVerified) {
+      const otp = generateOtp();
+      await db.collection("users").doc(userRecord.uid).update({
+        verifyCode: otp,
+      });
+
+      await sendVerificationEmail(userData.email, userData.username, otp);
       return {
         success: false,
         message: "Please Verify the Account to continue",
